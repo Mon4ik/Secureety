@@ -10,23 +10,30 @@ if xS ~= 7 and yS ~= 5 then
 end
 if fs.exists("settings.cfg") == false then
 	settings.set("Secureety.password", "12345")
-	settings.set("Secureety.openedTime", "5")
+	settings.set("Secureety.time", "5")
 	settings.save("settings.cfg")
 end
 settings.load("settings.cfg")
 password = settings.get("Secureety.pass")
 pass = ""
 passlen  = 0
-while true do
-	sleep(0.2)
+function draw_and_event(isEditPass)
+	local button = ""
 	monitor.setBackgroundColor(colors.white)
 	monitor.clear()
 	monitor.setBackgroundColor(colors.lightGray)
 	monitor.setTextColor(colors.lightGray)
+	if isEditPass then
+		monitor.setBackgroundColor(colors.yellow)
+		monitor.setTextColor(colors.yellow)
+	end
 	monitor.setCursorPos(2, 1)
 	monitor.write("-----")
 	monitor.setBackgroundColor(colors.lightGray)
 	monitor.setTextColor(colors.white)
+	if isEditPass then
+		monitor.setBackgroundColor(colors.yellow)
+	end
 	monitor.setCursorPos(2, 1)
 	local secreted = ""
 	for i=1, passlen do
@@ -171,14 +178,24 @@ while true do
 		monitor.setCursorPos(x, y)
 		monitor.write("0")
 	elseif x == 6 and y == 5 then
+		button = "E" 
+	else
+		--
+	end
+	return button, pass, passlen
+end
+while true do
+	sleep(0.2)
+	local other, pass2, passlen2 = draw_and_event()
+	if other == "E" then
 		monitor.setBackgroundColor(colors.gray)
 		monitor.setTextColor(colors.black)
-		monitor.setCursorPos(x, y)
+		monitor.setCursorPos(6, 5)
 		monitor.write("E")
 		sleep(0.2)
 		monitor.setBackgroundColor(colors.white)
 		monitor.setTextColor(colors.black)
-		monitor.setCursorPos(x, y)
+		monitor.setCursorPos(6, 5)
 		monitor.write("E")
 		password = settings.get("Secureety.password")
 		print(pass, password)
@@ -190,7 +207,7 @@ while true do
 			monitor.setTextColor(colors.green)
 			monitor.write("-----")
 			settings.load("settings.cfg")
-			local time = settings.get("Secureety.openedTime")
+			local time = settings.get("Secureety.time")
 			redstone.setAnalogOutput("right", 15)
 			local timerID = os.startTimer(tonumber(time))
 			while true do
@@ -204,12 +221,21 @@ while true do
 					monitor.setTextColor(colors.yellow)
 					monitor.write("-----")
 					term.setCursorPos(1, 1)
-					term.write("Enter new password: ")
-					local password = read()
-					settings.load("settings.cfg")
-					settings.set("Secureety.password", password)
-					settings.save("settings.cfg")
 					redstone.setAnalogOutput("right", 0)
+					while true do
+						other, pass2, passlen2 = draw_and_event(true)
+						if other == "E" and passlen > 0 then
+							settings.load("settings.cfg")
+							settings.set("Secureety.password", pass)
+							settings.save("settings.cfg")
+							pass = ""
+							passlen = 0
+							break
+						else
+							pass = pass2
+							passlen = passlen2
+						end
+					end
 					break
 				end
 			end
@@ -221,12 +247,13 @@ while true do
 			monitor.setTextColor(colors.red)
 			monitor.write("-----")
 			settings.load("settings.cfg")
-			local time = settings.get("Secureety.openedTime")
+			local time = settings.get("Secureety.time")
 			redstone.setAnalogOutput("left", 15)
 			sleep(tonumber(time))
 			redstone.setAnalogOutput("left", 0)
 		end
 	else
-		--
+		pass = pass2
+		passlen = passlen2
 	end
 end
